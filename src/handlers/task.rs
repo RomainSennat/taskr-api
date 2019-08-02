@@ -3,10 +3,12 @@ use crate::structs::{AppState, Task};
 use actix_web::{guard, web, HttpResponse, Scope};
 use bson::oid::ObjectId;
 use mongodb::{cursor::Cursor, db::ThreadedDatabase};
+use mongodb::coll::options::{FindOneAndUpdateOptions};
+use mongodb::coll::options::ReturnDocument::After;
 
 fn add_task(body: web::Json<Task>, state: web::Data<AppState>) -> HttpResponse {
     match state.db_client.collection("tasks").insert_one(body.to_doc(), None) {
-        Ok(_) => HttpResponse::Ok().finish(),
+        Ok(val) => HttpResponse::Accepted().content_type("application/json").json(doc! { "_id": val.inserted_id.unwrap() }),
         Err(_e) => HttpResponse::InternalServerError().finish()
     }
 }
@@ -50,7 +52,8 @@ fn remove_task(path: web::Path<String>, state: web::Data<AppState>) -> HttpRespo
 fn update_task(path: web::Path<String>, body: web::Json<Task>, state: web::Data<AppState>,) -> HttpResponse {
     match ObjectId::with_string(&path) {
         Ok(val) => {
-            match state.db_client.collection("tasks").find_one_and_replace(doc! { "_id" => val }, body.to_doc(), None) {
+            let options: FindOneAndUpdateOptions = FindOneAndUpdateOptions { return_document: Option::from(After), max_time_ms: None, projection: None, sort: None, upsert: None, write_concern: None };
+            match state.db_client.collection("tasks").find_one_and_replace(doc! { "_id" => val }, body.to_doc(), Some(options)) {
                 Ok(val) => match val {
                     Some(val) => HttpResponse::Ok().content_type("application/json").json(val),
                     None => HttpResponse::InternalServerError().finish()
