@@ -8,7 +8,7 @@ use mongodb::coll::options::ReturnDocument::After;
 
 fn add_task(body: web::Json<Task>, state: web::Data<AppState>) -> HttpResponse {
     match state.db_client.collection("tasks").insert_one(body.to_doc(), None) {
-        Ok(val) => HttpResponse::Accepted().content_type("application/json").json(doc! { "_id": val.inserted_id.unwrap() }),
+        Ok(val) => HttpResponse::Ok().content_type("application/json").json(doc! { "_id": val.inserted_id.unwrap() }),
         Err(_e) => HttpResponse::InternalServerError().finish()
     }
 }
