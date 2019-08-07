@@ -1,3 +1,4 @@
+// Import crate and mod
 use crate::structs::{AppState, Task};
 
 use actix_web::{guard, web, HttpResponse, Scope};
@@ -6,6 +7,7 @@ use mongodb::{cursor::Cursor, db::ThreadedDatabase};
 use mongodb::coll::options::{FindOneAndUpdateOptions};
 use mongodb::coll::options::ReturnDocument::After;
 
+// Add task to database
 fn add_task(body: web::Json<Task>, state: web::Data<AppState>) -> HttpResponse {
     match state.db_client.collection("tasks").insert_one(body.to_doc(), None) {
         Ok(val) => HttpResponse::Ok().content_type("application/json").json(doc! { "_id": val.inserted_id.unwrap() }),
@@ -13,12 +15,14 @@ fn add_task(body: web::Json<Task>, state: web::Data<AppState>) -> HttpResponse {
     }
 }
 
+// Fetch all tasks from database
 fn fetch_all_tasks(state: web::Data<AppState>) -> HttpResponse {
     let cursor: Cursor = state.db_client.collection("tasks").find(None, None).unwrap();
     let documents: Vec<_> = cursor.map(|doc| doc.unwrap()).collect();
     HttpResponse::Ok().content_type("application/json").json(documents)
 }
 
+// Fetch one task from database
 fn fetch_task(path: web::Path<String>, state: web::Data<AppState>) -> HttpResponse {
     match ObjectId::with_string(&path) {
         Ok(val) => {
@@ -34,6 +38,7 @@ fn fetch_task(path: web::Path<String>, state: web::Data<AppState>) -> HttpRespon
     }
 }
 
+// Remove task from database
 fn remove_task(path: web::Path<String>, state: web::Data<AppState>) -> HttpResponse {
     match ObjectId::with_string(&path) {
         Ok(val) => {
@@ -49,7 +54,8 @@ fn remove_task(path: web::Path<String>, state: web::Data<AppState>) -> HttpRespo
     }
 }
 
-fn update_task(path: web::Path<String>, body: web::Json<Task>, state: web::Data<AppState>,) -> HttpResponse {
+// Update task from database
+fn update_task(path: web::Path<String>, body: web::Json<Task>, state: web::Data<AppState>) -> HttpResponse {
     match ObjectId::with_string(&path) {
         Ok(val) => {
             let options: FindOneAndUpdateOptions = FindOneAndUpdateOptions { return_document: Option::from(After), max_time_ms: None, projection: None, sort: None, upsert: None, write_concern: None };
@@ -65,6 +71,7 @@ fn update_task(path: web::Path<String>, body: web::Json<Task>, state: web::Data<
     }
 }
 
+// Task endpoint builder
 pub fn build() -> Scope {
     web::scope("/tasks")
         .route("/", web::get().to(fetch_all_tasks))
