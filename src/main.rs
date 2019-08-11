@@ -11,7 +11,7 @@ mod handlers;
 mod structs;
 
 use actix_cors::Cors;
-use actix_web::{http::header, App, HttpServer};
+use actix_web::{http::{header, Method}, App, HttpServer};
 use mongodb::{Client, ThreadedClient};
 use mongodb::db::{Database, ThreadedDatabase};
 use structs::{AppState, Configuration};
@@ -43,7 +43,8 @@ fn main() {
             .wrap(
                 Cors::new()
                     .allowed_origin("http://localhost:5000")
-                    .allowed_methods(vec!["GET", "POST"])
+                    .allowed_origin("http://localhost:3000")
+                    .allowed_methods(vec![Method::DELETE, Method::GET, Method::POST, Method::PUT])
                     .allowed_headers(vec![header::ACCEPT, header::AUTHORIZATION, header::CONTENT_TYPE])
                     .max_age(3600)
             ) // CORS configuration
