@@ -6,13 +6,11 @@ use bson::oid::ObjectId;
 use mongodb::{cursor::Cursor, db::ThreadedDatabase};
 use mongodb::coll::options::{FindOneAndUpdateOptions};
 use mongodb::coll::options::ReturnDocument::After;
-use bson::ordered::OrderedDocument;
 
 // Add task to database
 fn add_task(body: web::Json<Task>, state: web::Data<AppState>) -> HttpResponse {
-    let document: OrderedDocument = body.to_doc();
-    match state.db_client.collection("tasks").insert_one(document.clone(), None) {
-        Ok(_val) => HttpResponse::Ok().content_type("application/json").json(document),
+    match state.db_client.collection("tasks").insert_one(body.to_doc(), None) {
+        Ok(val) => HttpResponse::Ok().content_type("application/json").json(doc! { "_id": val.inserted_id.unwrap() }),
         Err(_e) => HttpResponse::InternalServerError().finish()
     }
 }
