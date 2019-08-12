@@ -26,19 +26,25 @@ pub struct Configuration {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Task {
     description: String,
-    expire_at: String,
+    expire_at: Option<String>,
     name: String
 }
 
 impl Task {
     // Convert Task to OrderedDocument
     pub fn to_doc(&self) -> OrderedDocument {
-        doc! {
+        // Create document
+        let mut document: OrderedDocument = doc! {
             "description": &self.description,
-            "expire_at": DateTime::from(DateTime::parse_from_rfc3339(&self.expire_at).unwrap()),
             "name": &self.name,
-            "created_at": DateTime::from(Utc::now())
+        };
+        // Add optional fields
+        if let Some(date) = &self.expire_at {
+            document.insert("expire_at", DateTime::from(DateTime::parse_from_rfc3339(date).unwrap()));
         }
+        // Add metadata fields
+        document.insert("created_at", DateTime::from(Utc::now()));
+        document
     }
 }
 
