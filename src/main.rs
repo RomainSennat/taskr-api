@@ -16,7 +16,8 @@ use mongodb::{Client, ThreadedClient};
 use mongodb::db::{Database, ThreadedDatabase};
 use structs::{AppState, Configuration};
 
-fn main() {
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
     // Read API configuration file
     let cfg: Configuration = confy::load("taskr-api").unwrap();
     
@@ -47,11 +48,12 @@ fn main() {
                     .allowed_methods(vec![Method::DELETE, Method::GET, Method::POST, Method::PUT])
                     .allowed_headers(vec![header::ACCEPT, header::AUTHORIZATION, header::CONTENT_TYPE])
                     .max_age(3600)
+                    .finish()
             ) // CORS configuration
             .service(handlers::task::build()) // Task endpoint
     })
     .bind("127.0.0.1:5000")
     .unwrap()
     .run()
-    .unwrap();
+    .await
 }
